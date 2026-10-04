@@ -1,0 +1,22 @@
+[project]
+name = "variant5-rpc"
+version = "1.0.0"
+description = "In-memory TCP RPC prototype for practical assignment 1, variant 5"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+test = ["pytest>=8", "hypothesis>=6", "coverage>=7"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
