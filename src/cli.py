@@ -3,12 +3,12 @@
 import argparse
 import json
 
-from .model import DataModel, OPERATIONS
+from .model import OPERATIONS, DataModel
 
 
 def repl(target):
     """Read JSON commands and call matching model/client methods."""
-    print("Enter JSON: {\"method\": \"get_people\", \"args\": {}}")
+    print('Enter JSON: {"method": "get_people", "args": {}}')
     print("Type quit to exit.")
     while True:
         try:

@@ -6,8 +6,7 @@ import socket
 import socketserver
 from threading import Thread
 
-from .model import DataModel, OPERATIONS
-
+from .model import OPERATIONS, DataModel
 
 MAX_BODY = 1_000_000
 REQUEST_HEADER = 7
@@ -41,13 +40,13 @@ class RpcHandler(socketserver.BaseRequestHandler):
             first = self.request.recv(1)
             if not first:
                 return
+            oversized = False
             try:
-                header = first + _read_exact(
-                    self.request, REQUEST_HEADER - 1
-                )
+                header = first + _read_exact(self.request, REQUEST_HEADER - 1)
                 size = int.from_bytes(header[:5], "big")
                 code = int.from_bytes(header[5:], "big")
                 if size > MAX_BODY:
+                    oversized = True
                     raise ValueError("request body is too large")
                 body = _read_exact(self.request, size)
                 payload = json.loads(body)
@@ -58,8 +57,13 @@ class RpcHandler(socketserver.BaseRequestHandler):
                 method = getattr(self.server.model, OPERATIONS[code - 1])
                 result = method(**payload)
                 response = {"ok": True, "result": result}
-            except (ValueError, TypeError, KeyError, json.JSONDecodeError,
-                    ConnectionError) as error:
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                UnicodeDecodeError,
+                ConnectionError,
+            ) as error:
                 response = {"ok": False, "error": str(error)}
                 if isinstance(error, ConnectionError):
                     return
@@ -67,6 +71,8 @@ class RpcHandler(socketserver.BaseRequestHandler):
             frame = _pack_response(code, response)
             self.server.journal.info(frame.hex())
             self.request.sendall(frame)
+            if oversized:
+                return
 
 
 class RpcServer(socketserver.ThreadingTCPServer):
@@ -97,8 +103,9 @@ class RpcServer(socketserver.ThreadingTCPServer):
             self.journal.removeHandler(handler)
 
 
-def start_background_server(address=("127.0.0.1", 0),
-                            journal_path="journal.log"):
+def start_background_server(
+    address=("127.0.0.1", 0), journal_path="journal.log"
+):
     """Start a server for demonstrations and tests."""
     server = RpcServer(address, journal_path=journal_path)
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -146,9 +153,9 @@ class RpcClient:
 
     def edit_person(self, identifier, changes):
         """Edit a Person remotely."""
-        return self._call("edit_person", {
-            "identifier": identifier, "changes": changes
-        })
+        return self._call(
+            "edit_person", {"identifier": identifier, "changes": changes}
+        )
 
     def create_query(self, record):
         """Create a Query remotely."""
@@ -160,9 +167,9 @@ class RpcClient:
 
     def edit_query(self, identifier, changes):
         """Edit a Query remotely."""
-        return self._call("edit_query", {
-            "identifier": identifier, "changes": changes
-        })
+        return self._call(
+            "edit_query", {"identifier": identifier, "changes": changes}
+        )
 
     def create_result(self, record):
         """Create a Result remotely."""
@@ -174,9 +181,9 @@ class RpcClient:
 
     def edit_result(self, identifier, changes):
         """Edit a Result remotely."""
-        return self._call("edit_result", {
-            "identifier": identifier, "changes": changes
-        })
+        return self._call(
+            "edit_result", {"identifier": identifier, "changes": changes}
+        )
 
     def recent_queries(self, now=None):
         """Return the recent locale/content join remotely."""

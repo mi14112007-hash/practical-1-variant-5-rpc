@@ -4,7 +4,6 @@ from copy import deepcopy
 from threading import RLock
 from time import time
 
-
 SCHEMAS = {
     "person": {
         "identifier": int,
@@ -30,9 +29,15 @@ SCHEMAS = {
 }
 WINDOW_SECONDS = 9 * 60
 OPERATIONS = (
-    "create_person", "get_people", "edit_person",
-    "create_query", "get_queries", "edit_query",
-    "create_result", "get_results", "edit_result",
+    "create_person",
+    "get_people",
+    "edit_person",
+    "create_query",
+    "get_queries",
+    "edit_query",
+    "create_result",
+    "get_results",
+    "edit_result",
     "recent_queries",
 )
 
@@ -74,8 +79,10 @@ class DataModel:
     def _create(self, entity, record):
         with self.lock:
             self._validate(entity, record)
-            if any(item["identifier"] == record["identifier"]
-                   for item in self._table(entity)):
+            if any(
+                item["identifier"] == record["identifier"]
+                for item in self._table(entity)
+            ):
                 raise ValueError(f"{entity} identifier already exists")
             saved = deepcopy(record)
             self._table(entity).append(saved)
