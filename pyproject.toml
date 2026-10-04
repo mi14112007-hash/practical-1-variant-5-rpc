@@ -5,7 +5,7 @@ description = "In-memory TCP RPC prototype for practical assignment 1, variant 5
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
-test = ["pytest>=8", "hypothesis>=6", "coverage>=7"]
+test = ["pytest>=8", "hypothesis>=6", "coverage>=7", "ruff>=0.16,<1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -16,6 +16,12 @@ source = ["src"]
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
 
 [tool.setuptools.packages.find]
 where = ["."]
