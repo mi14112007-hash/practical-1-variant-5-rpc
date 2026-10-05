@@ -31,10 +31,26 @@ Unix. При ошибке возвращается понятное сообще
 Нужен Python 3.10 или новее. Рабочая папка — корень репозитория.
 
 ```sh
-chmod +x run.sh
 ./run.sh local
 ./run.sh server --host 127.0.0.1 --port 8765
 ./run.sh client --host 127.0.0.1 --port 8765
+```
+
+На macOS и Linux доступны также цели `make local`, `make server` и
+`make client`. Адрес и порт для `make` задаются переменными `HOST` и
+`PORT`, путь журнала — `JOURNAL`. Например:
+
+```sh
+make server PORT=9000
+make client PORT=9000
+```
+
+В Windows те же режимы запускаются через `run.bat`:
+
+```bat
+run.bat local
+run.bat server --host 127.0.0.1 --port 8765
+run.bat client --host 127.0.0.1 --port 8765
 ```
 
 Команды сервера и клиента запускают в разных терминалах. Опция
