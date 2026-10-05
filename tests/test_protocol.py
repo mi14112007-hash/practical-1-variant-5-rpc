@@ -65,13 +65,14 @@ def test_reject_malformed_requests(unknown_code):
         )
         port = server.server_address[1]
         try:
-            for size, code, body, message in (
+            invalid_requests = (
                 (MAX_BODY + 1, 1, b"", "too large"),
                 (2, 1, b"[]", "JSON object"),
                 (2, unknown_code, b"{}", "unknown operation"),
                 (1, 1, b"[", "Expecting value"),
                 (1, 1, b"\xff", "decode"),
-            ):
+            )
+            for size, code, body, message in invalid_requests:
                 response_code, payload = _request(port, size, code, body)
                 assert response_code == 0
                 assert not payload["ok"]
@@ -87,7 +88,7 @@ def test_reject_malformed_requests(unknown_code):
             server.server_close()
             thread.join()
         with open(f"{directory}/journal.log", encoding="utf-8") as log:
-            assert len(log.readlines()) == 5
+            assert len(log.readlines()) == len(invalid_requests)
 
 
 @settings(max_examples=3, deadline=None)

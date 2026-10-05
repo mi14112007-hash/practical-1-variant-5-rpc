@@ -21,7 +21,10 @@ show_missing = true
 line-length = 80
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "N", "C901", "PLR2004"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.setuptools.packages.find]
 where = ["."]

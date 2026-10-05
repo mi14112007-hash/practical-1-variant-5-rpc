@@ -26,15 +26,18 @@ def test_repl_handles_commands_and_errors(locale):
         "locale": locale,
         "user_agent": "agent",
     }
-    commands = (
-        "",
-        json.dumps({"method": "create_person", "args": {"record": record}}),
-        '{"method":"get_people"}',
+    invalid_commands = (
         '{"method":"missing"}',
         '{"method":"get_people","args":[]}',
         '{"method":"edit_person","args":{"identifier":1}}',
         "{}",
         "not json",
+    )
+    commands = (
+        "",
+        json.dumps({"method": "create_person", "args": {"record": record}}),
+        '{"method":"get_people"}',
+        *invalid_commands,
         "exit",
     )
     output = io.StringIO()
@@ -44,7 +47,7 @@ def test_repl_handles_commands_and_errors(locale):
     lines = output.getvalue().splitlines()
     assert json.loads(lines[2]) == record
     assert json.loads(lines[3]) == [record]
-    assert sum('"error"' in line for line in lines) == 5
+    assert sum('"error"' in line for line in lines) == len(invalid_commands)
     with patch("builtins.input", side_effect=EOFError):
         cli.repl(DataModel())
 
