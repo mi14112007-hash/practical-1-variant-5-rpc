@@ -143,15 +143,23 @@ class DataModel:
         return self._edit("result", identifier, changes)
 
     def recent_queries(self, now=None):
-        """Project locale and content after joining recent queries."""
+        """Right-join recent queries to people and project locale/content."""
         current = int(time()) if now is None else now
         if type(current) is not int:
             raise ValueError("now must be int")
         with self.lock:
+            people_by_id = {
+                person["identifier"]: person for person in self.people
+            }
             return [
-                {"locale": person["locale"], "content": query["content"]}
+                {
+                    "locale": (
+                        people_by_id[query["person"]]["locale"]
+                        if query["person"] in people_by_id
+                        else None
+                    ),
+                    "content": query["content"],
+                }
                 for query in self.queries
                 if query["time"] > current - WINDOW_SECONDS
-                for person in self.people
-                if person["identifier"] == query["person"]
             ]

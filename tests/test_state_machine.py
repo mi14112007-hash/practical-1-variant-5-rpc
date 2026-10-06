@@ -170,6 +170,25 @@ class RpcMachine(RuleBasedStateMachine):
         else:
             raise AssertionError("missing parent was accepted")
 
+    @rule()
+    def retain_unmatched_query_in_right_join(self):
+        """A right-side query stays visible if its person is absent."""
+        orphan = {
+            "identifier": self._id(),
+            "time": 2_000_000,
+            "content": "unmatched-right-row",
+            "person": -1,
+        }
+        with self.server.model.lock:
+            self.server.model.queries.append(orphan)
+        try:
+            assert {"locale": None, "content": orphan["content"]} in (
+                self.client.recent_queries(now=2_000_000)
+            )
+        finally:
+            with self.server.model.lock:
+                self.server.model.queries.remove(orphan)
+
     @rule(text=st.text(max_size=8))
     def reject_invalid_person(self, text):
         record = {
