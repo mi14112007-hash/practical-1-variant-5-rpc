@@ -53,7 +53,11 @@ def main():
         with RpcServer(
             (args.host, args.port), journal_path=args.journal
         ) as server:
-            print(f"RPC listening on {args.host}:{server.server_address[1]}")
+            print(
+                f"RPC listening on {args.host}",
+                server.server_address[1],
+                sep=":",
+            )
             try:
                 server.serve_forever()
             except KeyboardInterrupt:
