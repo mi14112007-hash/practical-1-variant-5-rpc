@@ -4,7 +4,12 @@ from tempfile import TemporaryDirectory
 
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+from hypothesis.stateful import (
+    RuleBasedStateMachine,
+    initialize,
+    invariant,
+    rule,
+)
 
 from src.rpc import RpcClient, start_background_server
 
@@ -40,6 +45,42 @@ class RpcMachine(RuleBasedStateMachine):
         identifier = self.next_id
         self.next_id += 1
         return identifier
+
+    @initialize()
+    def seed_relations(self):
+        person = {
+            "identifier": self._id(),
+            "time": 1,
+            "locale": "ru-RU",
+            "user_agent": "agent",
+        }
+        assert self.client.create_person(person) == person
+        self.people[person["identifier"]] = person
+        for age in (0, -600):
+            query = {
+                "identifier": self._id(),
+                "time": 2_000_000 + age,
+                "content": "seed",
+                "person": person["identifier"],
+            }
+            assert self.client.create_query(query) == query
+            self.queries[query["identifier"]] = query
+        result = {
+            "identifier": self._id(),
+            "time": 2_000_000,
+            "output": "seed",
+            "state": "pending",
+            "failure": "",
+            "query": min(self.queries),
+            "duration": 0,
+        }
+        assert self.client.create_result(result) == result
+        result["state"] = "done"
+        assert (
+            self.client.edit_result(result["identifier"], {"state": "done"})
+            == result
+        )
+        self.results[result["identifier"]] = result
 
     @rule(locale=st.text(max_size=8), agent=st.text(max_size=8))
     def add_person(self, locale, agent):
@@ -196,7 +237,9 @@ class RpcMachine(RuleBasedStateMachine):
             "duration": 1,
         }
         self._expect_error(self.client.create_result, record, "does not exist")
-        self._expect_error(self.client.recent_queries, "bad", "now must be int")
+        self._expect_error(
+            self.client.recent_queries, "bad", "now must be int"
+        )
         assert isinstance(self.client.recent_queries(), list)
 
     @staticmethod
